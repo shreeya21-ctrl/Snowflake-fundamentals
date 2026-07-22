@@ -1,0 +1,99 @@
+USE ROLE ACCOUNTADMIN;
+
+USE WAREHOUSE COMPUTE_WH;
+
+USE SCHEMA MYDB.MYSCHEMA;
+
+CREATE OR REPLACE TABLE TABLEONE(
+    ID INT,
+    NAME VARCHAR,
+    CREATED_DATE DATE
+);
+
+INSERT INTO TABLEONE VALUES 
+    (1, 'Charles', '2026-07-18'),
+    (2, 'Lucas', '2025-07-18');
+
+SELECT * FROM TABLEONE;
+
+CREATE OR REPLACE TABLE TABLETWO(
+    ID INT,
+    NAME VARCHAR,
+    CREATED_DATE DATE,
+    CREATED_DAY VARCHAR,
+    CREATED_MONTH VARCHAR,
+    CREATED_YEAR VARCHAR
+);
+
+INSERT INTO TABLETWO
+SELECT
+    a.id,
+    a.name,
+    a.created_date,
+    TO_VARCHAR(DAY(a.created_date)),
+    TO_VARCHAR(MONTH(a.created_date)),
+    TO_VARCHAR(YEAR(a.created_date))
+FROM TABLEONE a
+LEFT JOIN TABLETWO b
+    ON a.id = b.id
+WHERE b.id IS NULL;
+
+SELECT * FROM TABLETWO;
+
+INSERT INTO TABLEONE VALUES 
+    (3,'SOFYY', '2024-06-06');
+
+
+----Now we can use schedule task 
+CREATE OR REPLACE TABLE TABLEONE(
+    ID INT,
+    NAME VARCHAR,
+    CREATED_DATE DATE
+);
+
+INSERT INTO TABLEONE VALUES 
+    (1, 'Charles', '2026-07-18'),
+    (2, 'Lucas', '2025-07-18');
+
+SELECT * FROM TABLEONE;
+
+CREATE OR REPLACE TABLE TABLETWO(
+    ID INT,
+    NAME VARCHAR,
+    CREATED_DATE DATE,
+    CREATED_DAY VARCHAR,
+    CREATED_MONTH VARCHAR,
+    CREATED_YEAR VARCHAR
+);
+
+CREATE OR REPLACE TASK my_task
+WAREHOUSE = COMPUTE_WH
+SCHEDULE = '1 MINUTE'
+AS 
+INSERT INTO TABLETWO
+SELECT
+    a.id,
+    a.name,
+    a.created_date,
+    TO_VARCHAR(DAY(a.created_date)),
+    TO_VARCHAR(MONTH(a.created_date)),
+    TO_VARCHAR(YEAR(a.created_date))
+FROM TABLEONE a
+LEFT JOIN TABLETWO b
+    ON a.id = b.id
+WHERE b.id IS NULL;
+
+
+--DISPLAY TASKS
+SHOW TASKS;
+
+--command to run the task
+ALTER TASK my_task RESUME;
+ALTER TASK my_task SUSPEND;
+
+SELECT * FROM table (information_schema.task_history(task_name => 'my_task'));
+
+INSERT INTO TABLEONE VALUES 
+    (3,'Elan', '2024-06-06');
+
+SELECT * FROM TABLETWO;
